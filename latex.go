@@ -1,9 +1,9 @@
 package extensions
 
 import (
+	"github.com/kaleocheng/goldmark-extensions/ast"
 	"github.com/yuin/goldmark"
 	gast "github.com/yuin/goldmark/ast"
-	"github.com/yuin/goldmark/extension/ast"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer"
 	"github.com/yuin/goldmark/renderer/html"
