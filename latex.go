@@ -11,30 +11,7 @@ import (
 	"github.com/yuin/goldmark/util"
 )
 
-type latexDelimiterProcessor struct {
-}
-
-func (p *latexDelimiterProcessor) IsDelimiter(b byte) bool {
-	return b == '$'
-}
-
-func (p *latexDelimiterProcessor) CanOpenCloser(opener, closer *parser.Delimiter) bool {
-	return opener.Char == closer.Char
-}
-
-func (p *latexDelimiterProcessor) OnMatch(consumes int) gast.Node {
-	isInline := true
-	if consumes > 1 {
-		isInline = false
-	}
-	return ast.NewLatex(isInline)
-}
-
-var defaultLatexDelimiterProcessor = &latexDelimiterProcessor{}
-
-type latexParser struct {
-}
-
+var latexRegexp = regexp.MustCompile(`^\$\$?(.|\n)+?\$\$?`)
 var defaultLatexParser = &latexParser{}
 
 // NewLatexParser return a new InlineParser that parses
@@ -48,19 +25,15 @@ func (s *latexParser) Trigger() []byte {
 }
 
 func (s *latexParser) Parse(parent gast.Node, block text.Reader, pc parser.Context) gast.Node {
-	before := block.PrecendingCharacter()
+
 	line, segment := block.PeekLine()
-	node := parser.ScanDelimiter(line, before, 1, defaultLatexDelimiterProcessor)
-	if node == nil {
-		node = parser.ScanDelimiter(line, before, 2, defaultLatexDelimiterProcessor)
-	}
-	if node == nil {
+	m := latexRegexp.FindSubmatchIndex(line)
+	if m == nil {
 		return nil
 	}
-
-	node.Segment = segment.WithStop(segment.Start + node.OriginalLength)
-	block.Advance(node.OriginalLength)
-	pc.PushDelimiter(node)
+	block.Advance(m[1])
+	node := ast.NewLatex()
+	node.AppendChild(node, gast.NewTextSegment(text.NewSegment(segment.Start+1, segment.Start+m[1])))
 	return node
 }
 

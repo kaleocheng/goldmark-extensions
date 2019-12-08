@@ -3,7 +3,6 @@ package ast
 
 import (
 	"fmt"
-	"net/url"
 
 	gast "github.com/yuin/goldmark/ast"
 )
@@ -20,11 +19,6 @@ func (n *Latex) Dump(source []byte, level int) {
 		"Inline": fmt.Sprintf("%v", n.IsInline),
 	}
 	gast.DumpHelper(n, source, level, m, nil)
-}
-
-// Text implements Node.Text.
-func (n *Latex) Text(source []byte) []byte {
-	return []byte(url.QueryEscape(n.Segment.Value(source)))
 }
 
 // KindLatex is a NodeKind of the Latex node.
