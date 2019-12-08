@@ -12,7 +12,7 @@ import (
 	"regexp"
 )
 
-var atRegexp = regexp.MustCompile(`^@[-a-zA-Z0-9]*`)
+var atRegexp = regexp.MustCompile(`^@[\w'-]+`)
 
 type atParser struct {
 }
