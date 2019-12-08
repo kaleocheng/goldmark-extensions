@@ -92,11 +92,11 @@ func (r *LatexHTMLRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegistere
 
 func (r *LatexHTMLRenderer) renderLatex(w util.BufWriter, source []byte, node gast.Node, entering bool) (gast.WalkStatus, error) {
 	n := node.(*ast.Latex)
-	before := "<latex>"
-	end := "</latex>"
+	before := "<figure><img src=\"https://math.now.sh?from="
+	end := "\"/></figure>"
 	if n.IsInline {
-		before = "<latex-inline>"
-		end = "</latex-inline>"
+		before = "<img src=\"https://math.now.sh?inline="
+		end = "\"/>"
 	}
 	if entering {
 		w.WriteString(before)
