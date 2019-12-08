@@ -11,12 +11,14 @@ import (
 type Latex struct {
 	gast.BaseInline
 	IsInline bool
+	Value    []byte
 }
 
 // Dump implements Node.Dump.
 func (n *Latex) Dump(source []byte, level int) {
 	m := map[string]string{
 		"Inline": fmt.Sprintf("%v", n.IsInline),
+		"Vaule":  fmt.Sprintf("%v", n.Value),
 	}
 	gast.DumpHelper(n, source, level, m, nil)
 }
@@ -30,8 +32,9 @@ func (n *Latex) Kind() gast.NodeKind {
 }
 
 // NewLatex returns a new Latex node.
-func NewLatex(isInline bool) *Latex {
+func NewLatex(isInline bool, value []byte) *Latex {
 	return &Latex{
 		IsInline: isInline,
+		Value:    value,
 	}
 }

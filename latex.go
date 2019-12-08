@@ -9,9 +9,16 @@ import (
 	"github.com/yuin/goldmark/renderer/html"
 	"github.com/yuin/goldmark/text"
 	"github.com/yuin/goldmark/util"
+	"net/url"
+	"regexp"
 )
 
-var latexRegexp = regexp.MustCompile(`^\$\$?(.|\n)+?\$\$?`)
+var latexBlockRegexp = regexp.MustCompile(`^\$\$[^$]*\$\$`)
+var latexInlineRegexp = regexp.MustCompile(`^\$[^$]*\$`)
+
+type latexParser struct {
+}
+
 var defaultLatexParser = &latexParser{}
 
 // NewLatexParser return a new InlineParser that parses
@@ -25,15 +32,27 @@ func (s *latexParser) Trigger() []byte {
 }
 
 func (s *latexParser) Parse(parent gast.Node, block text.Reader, pc parser.Context) gast.Node {
-
 	line, segment := block.PeekLine()
-	m := latexRegexp.FindSubmatchIndex(line)
+	isInline := false
+	m := latexBlockRegexp.FindSubmatchIndex(line)
+	if m == nil {
+		m = latexInlineRegexp.FindSubmatchIndex(line)
+		isInline = true
+	}
 	if m == nil {
 		return nil
 	}
+
 	block.Advance(m[1])
-	node := ast.NewLatex()
-	node.AppendChild(node, gast.NewTextSegment(text.NewSegment(segment.Start+1, segment.Start+m[1])))
+
+	var value []byte
+	if isInline {
+		value = block.Value(text.NewSegment(segment.Start+1, segment.Start+m[1]-1))
+	} else {
+		value = block.Value(text.NewSegment(segment.Start+2, segment.Start+m[1]-2))
+	}
+	node := ast.NewLatex(isInline, value)
+
 	return node
 }
 
@@ -65,6 +84,7 @@ func (r *LatexHTMLRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegistere
 
 func (r *LatexHTMLRenderer) renderLatex(w util.BufWriter, source []byte, node gast.Node, entering bool) (gast.WalkStatus, error) {
 	n := node.(*ast.Latex)
+	value := url.QueryEscape(string(n.Value))
 	before := "<figure><img src=\"https://math.now.sh?from="
 	end := "\"/></figure>"
 	if n.IsInline {
@@ -73,6 +93,7 @@ func (r *LatexHTMLRenderer) renderLatex(w util.BufWriter, source []byte, node ga
 	}
 	if entering {
 		w.WriteString(before)
+		w.WriteString(value)
 	} else {
 		w.WriteString(end)
 	}
