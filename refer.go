@@ -52,7 +52,7 @@ func (s *referParser) Parse(parent gast.Node, block text.Reader, pc parser.Conte
 	length := len(argv)
 
 	if length == 2 {
-		title = []byte(strings.Title(argv[0]))
+		title = []byte(argv[0])
 		url = []byte(argv[1])
 		node := ast.NewRefer(title, url)
 		return node
