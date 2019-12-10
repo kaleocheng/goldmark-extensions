@@ -10,9 +10,7 @@ import (
 	"github.com/yuin/goldmark/renderer/html"
 	"github.com/yuin/goldmark/text"
 	"github.com/yuin/goldmark/util"
-	"path/filepath"
 	"regexp"
-	"strings"
 )
 
 var referRegexp = regexp.MustCompile(`^@refer\(.*\)`)
@@ -59,9 +57,7 @@ func (s *referParser) Parse(parent gast.Node, block text.Reader, pc parser.Conte
 	}
 
 	if length == 1 {
-		ts := strings.Split(filepath.Clean(argv[0]), "/")
-		t := strings.Replace(ts[len(ts)-1], "-", " ", -1)
-		title = []byte(strings.ToLower(t))
+		title = []byte(argv[0])
 		url = []byte(argv[0])
 		node := ast.NewRefer(title, url)
 		return node
