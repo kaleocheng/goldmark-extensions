@@ -1,7 +1,6 @@
 package extensions
 
 import (
-	"fmt"
 	"github.com/kaleocheng/goldmark-extensions/ast"
 	"github.com/kaleocheng/goldmark-extensions/utils"
 	"github.com/yuin/goldmark"
@@ -12,6 +11,7 @@ import (
 	"github.com/yuin/goldmark/text"
 	"github.com/yuin/goldmark/util"
 	"regexp"
+	"strings"
 )
 
 var dateRegexp = regexp.MustCompile(`^@date\(.*\)`)
@@ -38,19 +38,10 @@ func (s *dateParser) Parse(parent gast.Node, block text.Reader, pc parser.Contex
 		return nil
 	}
 
-	var argv []string
-	err := utils.Argvs(block.Value(text.NewSegment(segment.Start+6, segment.Start+m[1]-1)), &argv)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-	if len(argv) != 1 {
-		return nil
-	}
+	argv := utils.Argvs(block.Value(text.NewSegment(segment.Start+6, segment.Start+m[1]-1)))
 
 	block.Advance(m[1])
-
-	value := []byte(argv[0])
+	value := []byte(strings.Join(argv[:], " "))
 	node := ast.NewDate(value)
 	return node
 }
