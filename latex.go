@@ -1,7 +1,9 @@
 package extensions
 
 import (
+	"fmt"
 	"github.com/kaleocheng/goldmark-extensions/ast"
+	"github.com/kaleocheng/goldmark-extensions/utils"
 	"github.com/yuin/goldmark"
 	gast "github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/parser"
@@ -10,6 +12,7 @@ import (
 	"github.com/yuin/goldmark/text"
 	"github.com/yuin/goldmark/util"
 	"net/url"
+	"os"
 	"regexp"
 )
 
@@ -82,9 +85,45 @@ func (r *LatexHTMLRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegistere
 	reg.Register(ast.KindLatex, r.renderLatex)
 }
 
+// LocalLatexJSON is the response from local Latex server
+type LocalLatexJSON struct {
+	SpeakText string `json:"speakText"`
+	SVG       string `json:"svg"`
+	Width     string `json:"width"`
+	Height    string `json:"height"`
+	Style     string `json:"style"`
+}
+
 func (r *LatexHTMLRenderer) renderLatex(w util.BufWriter, source []byte, node gast.Node, entering bool) (gast.WalkStatus, error) {
 	n := node.(*ast.Latex)
 	value := url.QueryEscape(string(n.Value))
+
+	if useLocalServer, ok := os.LookupEnv("HUGO_LATEX_USE_LOCAL"); ok {
+		// use local server to render latex
+		u, err := url.Parse(useLocalServer)
+		if err != nil {
+			fmt.Println(err)
+			return gast.WalkContinue, nil
+		}
+		latexRes := &LocalLatexJSON{}
+		query := "/?q=" + value
+		if n.IsInline {
+			query += "&inline=true"
+		}
+
+		err = utils.GetJSON(u.String()+query, latexRes)
+		if err != nil {
+			fmt.Println(err)
+			return gast.WalkContinue, nil
+		}
+
+		if entering {
+			w.WriteString(latexRes.SVG)
+		}
+		return gast.WalkContinue, nil
+	}
+
+	// use external service to get latex img
 	before := "<figure><img src=\"https://math.now.sh?from="
 	end := "\"/></figure>"
 	if n.IsInline {
@@ -98,6 +137,7 @@ func (r *LatexHTMLRenderer) renderLatex(w util.BufWriter, source []byte, node ga
 		w.WriteString(end)
 	}
 	return gast.WalkContinue, nil
+
 }
 
 type latex struct {
