@@ -17,7 +17,7 @@ func Map(vs []string, f func(string) string) []string {
 
 func Argvs(source []byte) []string {
 	return Map(strings.Split(string(source), ","), func(s string) string {
-		s = strings.Trim(s, `" `)
+		s = strings.Trim(s, `" '`)
 		return s
 	})
 }

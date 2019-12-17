@@ -1,8 +1,8 @@
 package extensions
 
 import (
-	"encoding/json"
 	"github.com/kaleocheng/goldmark-extensions/ast"
+	"github.com/kaleocheng/goldmark-extensions/utils"
 	"github.com/yuin/goldmark"
 	gast "github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/parser"
@@ -13,7 +13,7 @@ import (
 	"regexp"
 )
 
-var referRegexp = regexp.MustCompile(`^@refer\(.*\)`)
+var referRegexp = regexp.MustCompile(`^@refer\([^(\(\))]*\)`)
 
 type referParser struct {
 }
@@ -37,28 +37,21 @@ func (s *referParser) Parse(parent gast.Node, block text.Reader, pc parser.Conte
 		return nil
 	}
 
+	argv := utils.Argvs(block.Value(text.NewSegment(segment.Start+7, segment.Start+m[1]-1)))
 	block.Advance(m[1])
 
-	var argvBytes []byte
-	var argv []string
-	var title []byte
-	var url []byte
-	argvBytes = append(argvBytes, []byte("[")...)
-	argvBytes = append(argvBytes, block.Value(text.NewSegment(segment.Start+7, segment.Start+m[1]-1))...)
-	argvBytes = append(argvBytes, []byte("]")...)
-	_ = json.Unmarshal(argvBytes, &argv)
 	length := len(argv)
 
 	if length == 2 {
-		title = []byte(argv[0])
-		url = []byte(argv[1])
+		title := []byte(argv[0])
+		url := []byte(argv[1])
 		node := ast.NewRefer(title, url)
 		return node
 	}
 
 	if length == 1 {
-		title = []byte(argv[0])
-		url = []byte(argv[0])
+		title := []byte(argv[0])
+		url := []byte(argv[0])
 		node := ast.NewRefer(title, url)
 		return node
 	}

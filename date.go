@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-var dateRegexp = regexp.MustCompile(`^@date\(.*\)`)
+var dateRegexp = regexp.MustCompile(`^@date\([^(\(\))]*\)`)
 
 type dateParser struct {
 }

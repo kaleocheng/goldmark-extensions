@@ -2,6 +2,7 @@ package extensions
 
 import (
 	"github.com/kaleocheng/goldmark-extensions/ast"
+	"github.com/kaleocheng/goldmark-extensions/utils"
 	"github.com/yuin/goldmark"
 	gast "github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/parser"
@@ -14,7 +15,7 @@ import (
 	"strings"
 )
 
-var postRegexp = regexp.MustCompile(`^@post\(".*"\)`)
+var postRegexp = regexp.MustCompile(`^@post\([^(\(\))]*\)`)
 
 type postParser struct {
 }
@@ -38,9 +39,14 @@ func (s *postParser) Parse(parent gast.Node, block text.Reader, pc parser.Contex
 		return nil
 	}
 
+	argv := utils.Argvs(block.Value(text.NewSegment(segment.Start+7, segment.Start+m[1]-2)))
 	block.Advance(m[1])
 
-	url := block.Value(text.NewSegment(segment.Start+7, segment.Start+m[1]-2))
+	if len(argv) != 1 {
+		return nil
+	}
+
+	url := []byte(argv[0])
 	cleanedTitle := strings.Split(filepath.Clean(string(url)), "/")
 	title := []byte(strings.Title(strings.ToLower(strings.Replace(cleanedTitle[len(cleanedTitle)-1], "-", " ", -1))))
 	node := ast.NewPost(title, url)
